@@ -61,7 +61,24 @@ public class DynamoClient<T> {
             return null;
         }
     }
+    public T getItemRange(String keyValue, String rangeKey) {
 
+        try {
+            DynamoDBMapperConfig mapperConfig = new DynamoDBMapperConfig.Builder()
+                    .withConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT)
+                    .build();
+
+            DynamoDBMapper mapper = new DynamoDBMapper(this.dynamoClient);
+            T item = mapper.load(this.typeParameterClass, keyValue,rangeKey,
+                    mapperConfig);
+
+            return item;
+        } catch (AmazonServiceException e) {
+            System.err.println(e.getErrorMessage());
+            System.exit(1);
+            return null;
+        }
+    }
     public boolean updateRow(T item) {
 
         try {
@@ -106,6 +123,24 @@ public class DynamoClient<T> {
             return false;
         }
         return true;
+    }
+    public void deleteItem(String Key, String Range) {
+
+        try {
+            DynamoDBMapperConfig mapperConfig = new DynamoDBMapperConfig.Builder()
+                    .withConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT)
+                    .build();
+
+            DynamoDBMapper mapper = new DynamoDBMapper(this.dynamoClient);
+            T item = mapper.load(this.typeParameterClass, Key,Range,
+                    mapperConfig);
+            mapper.delete(item);
+        } catch (AmazonServiceException e) {
+            System.err.println(e.getErrorMessage());
+            System.exit(1);
+
+        }
+
     }
     public boolean addRow(T item) {
         try {

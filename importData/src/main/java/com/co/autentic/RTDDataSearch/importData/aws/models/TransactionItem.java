@@ -1,13 +1,14 @@
 package com.co.autentic.RTDDataSearch.importData.aws.models;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
-@DynamoDBTable(tableName="rtd-Clients-Import")
+@DynamoDBTable(tableName="rtd-Clients-New-Import")
 public class TransactionItem {
-    public TransactionItem(String document, String type, String dateImport){
+    public TransactionItem(String document, String Entity, String dateImport){
         this.DocumentcustomerId = document;
-        this.DocumentType = type;
+        this.Entity = Entity;
         this.LastDateImport = dateImport;
     }
     public TransactionItem(){}
@@ -15,7 +16,7 @@ public class TransactionItem {
     private String DocumentcustomerId;
 
 
-    private String DocumentType;
+    private String Entity;
 
 
     private String LastDateImport;
@@ -31,13 +32,13 @@ public class TransactionItem {
         this.DocumentcustomerId = documentcustomerId;
     }
 
-    @DynamoDBAttribute(attributeName="DocumentType")
-    public String getDocumentType() {
-        return DocumentType;
+    @DynamoDBRangeKey(attributeName="Entity")
+    public String getEntity() {
+        return Entity;
     }
-    @DynamoDBAttribute(attributeName="DocumentType")
-    public void setDocumentType(String documentType) {
-        this.DocumentType = documentType;
+    @DynamoDBRangeKey(attributeName="Entity")
+    public void setEntity(String Entity) {
+        this.Entity = Entity;
     }
 
     @DynamoDBAttribute(attributeName="LastDateImport")

@@ -11,6 +11,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Properties;
 
 public class getDataService {
@@ -39,12 +40,22 @@ public class getDataService {
                 String line = null;
                 while((line = br.readLine()) != null){
                     String[] values = line.split(",");
-                    if(values.length < 3){
+                    if(values.length == 2){
                         TransactionItem item = new TransactionItem(values[0],values[1],null);
-                        TransactionItem itemExists = getData(values[0]);
-                        if(itemExists == null || !itemExists.getDocumentType().equals(item.getDocumentType())){
+                        TransactionItem itemExists = getData(values[0],values[1]);
+                        if(itemExists == null ){
                             setData(item);
                         }
+                    }
+                    else{
+                        if(values.length == 3 && Objects.equals(values[2], "DELETE")){
+                            TransactionItem item = new TransactionItem(values[0],values[1],null);
+                            //TransactionItem itemExists = getData(values[0],values[1]);
+                            //if(itemExists == null || !itemExists.getDocumentType().equals(item.getDocumentType())){
+                                delData(item);
+                            //}
+                        }
+
                     }
                 }
                 config.setLastDateImport(dateFormat.format(data.getLastModifiedDate()));
@@ -60,9 +71,9 @@ public class getDataService {
         }
 
     }
-    public TransactionItem getData(String value){
+    public TransactionItem getData(String value, String Range){
         DynamoClient<TransactionItem> db = new DynamoClient<>(TableData, TransactionItem.class);
-        TransactionItem TR = db.getItem(value);
+        TransactionItem TR = db.getItemRange(value, Range);
         return TR;
     }
     public void setData(TransactionItem item){
@@ -73,7 +84,11 @@ public class getDataService {
     public TransactionItem getlastDade() throws ParseException {
         TransactionItem response = new TransactionItem();
         DynamoClient<TransactionItem> db = new DynamoClient<>(TableData, TransactionItem.class);
-        response =db.getItem(docConfig);
+        response =db.getItemRange(docConfig,"CONFIG");
         return response;
+    }
+    public void delData(TransactionItem value){
+        DynamoClient<TransactionItem> db = new DynamoClient<>(TableData, TransactionItem.class);
+        db.deleteRow(value);
     }
 }
