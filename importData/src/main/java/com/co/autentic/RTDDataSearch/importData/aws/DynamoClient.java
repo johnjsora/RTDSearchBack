@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DynamoClient<T> {
-    private final AmazonDynamoDB dynamoClient;
+    private final AmazonDynamoDB dynamoC    lient;
     private final String tableName;
     private final Class<T> typeParameterClass;
     public DynamoClient(String tableName, Class<T> typeParameterClass) {

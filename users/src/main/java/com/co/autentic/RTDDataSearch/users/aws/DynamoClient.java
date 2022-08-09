@@ -14,18 +14,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Index;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.co.autentic.RTDDataSearch.users.aws.models.TransactionItem;
 import com.co.autentic.RTDDataSearch.users.aws.models.proposalmoldel;
+import com.co.autentic.RTDDataSearch.users.models.ResponseListClient;
 import com.co.autentic.RTDDataSearch.users.models.ResponseListProposal;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DynamoClient<T> {
     private final AmazonDynamoDB dynamoClient;
@@ -54,6 +49,25 @@ public class DynamoClient<T> {
 
             DynamoDBMapper mapper = new DynamoDBMapper(this.dynamoClient);
             T item = mapper.load(this.typeParameterClass, keyValue,
+                    mapperConfig);
+
+            return item;
+        } catch (AmazonServiceException e) {
+            System.err.println(e.getErrorMessage());
+            System.exit(1);
+            return null;
+        }
+    }
+
+    public T getItemRange(String keyValue, String rangeKey) {
+
+        try {
+            DynamoDBMapperConfig mapperConfig = new DynamoDBMapperConfig.Builder()
+                    .withConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT)
+                    .build();
+
+            DynamoDBMapper mapper = new DynamoDBMapper(this.dynamoClient);
+            T item = mapper.load(this.typeParameterClass, keyValue,rangeKey,
                     mapperConfig);
 
             return item;
@@ -147,6 +161,45 @@ public class DynamoClient<T> {
 
         }
     }
+
+    public ResponseListClient getClientsByEntity(String entity) {
+        try {
+            List<TransactionItem> ResponseList = new ArrayList<>();
+            ResponseListClient Response = new ResponseListClient();
+
+            Map<String, AttributeValue> lastKeyEvaluated = null;
+            do {
+                Condition scanFilterCondition = new Condition()
+                        .withComparisonOperator(ComparisonOperator.EQ.toString())
+                        .withAttributeValueList(new AttributeValue().withS(entity));
+                Map<String, Condition> conditions = new HashMap<>();
+                conditions.put("Entity", scanFilterCondition);
+
+                ScanRequest scanRequest = new ScanRequest()
+                        .withTableName("rtd-Clients-New-Import")
+                        .withScanFilter(conditions)
+                        .withExclusiveStartKey(lastKeyEvaluated);
+
+                ScanResult result = this.dynamoClient.scan(scanRequest);
+                for (Map<String, AttributeValue> item : result.getItems()){
+                    ResponseList.add(new TransactionItem(
+                            item.get("DocumentcustomerId").getS(),
+                            item.get("Entity").getS()));
+
+                }
+                lastKeyEvaluated = result.getLastEvaluatedKey();
+                Response.setClients(ResponseList);
+            } while (lastKeyEvaluated != null);
+            return Response;
+
+        } catch (AmazonServiceException e) {
+            System.err.println(e.getErrorMessage());
+            System.exit(1);
+            return null;
+
+        }
+    }
+
     public boolean updateRow(T item) {
 
         try {

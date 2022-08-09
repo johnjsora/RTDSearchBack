@@ -71,9 +71,16 @@ public class Launcher implements RequestStreamHandler {
                         replyProxy.put("statusCode", respExists.getOperationCode());
                     }
                     else{
-                        UserExistsResponse respExists = user.verifyByCC(body);
-                        replyProxy.put("body",objectMapper.writeValueAsString(respExists));
-                        replyProxy.put("statusCode", respExists.getOperationCode());
+                        if(body.isClientQuery()){
+                            ResponseProposal respExists = user.getClientsByEntityAsCSV(body);
+                            replyProxy.put("body",objectMapper.writeValueAsString(respExists));
+                            replyProxy.put("statusCode", respExists.getOperationCode());
+                        }
+                        else{
+                            UserExistsResponse respExists = user.verifyByCC(body);
+                            replyProxy.put("body",objectMapper.writeValueAsString(respExists));
+                            replyProxy.put("statusCode", respExists.getOperationCode());
+                        }
                     }
                     break;
                 case "PUT":

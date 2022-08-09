@@ -7,11 +7,12 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 
 @DynamoDBTable(tableName="rtd-Clients-detail")
 public class usermodel {
-    public usermodel(String email, String userName, String userIdentification, String identificationType){
+    public usermodel(String email, String userName, String userIdentification, String identificationType, String entity){
         this.email = email;
         this.identificationType = identificationType;
         this.userName = userName;
         this.userIdentification = userIdentification;
+        this.entity = entity;
 
     }
     public usermodel(){}
@@ -25,6 +26,8 @@ public class usermodel {
     private String identificationType;
 
     private String role;
+
+    private String entity;
 
     @DynamoDBHashKey(attributeName = "email")
     public String getEmail() {
@@ -69,5 +72,27 @@ public class usermodel {
     @DynamoDBAttribute(attributeName="role")
     public void setRole(String role) {
         this.role = role;
+    }
+
+    @DynamoDBAttribute(attributeName="entity")
+    public String getEntity() {
+        return entity;
+    }
+
+    @DynamoDBAttribute(attributeName="entity")
+    public void setEntity(String entity) {
+        this.entity = entity;
+    }
+
+    @Override
+    public String toString() {
+        return "usermodel{" +
+                "email='" + email + '\'' +
+                ", userName='" + userName + '\'' +
+                ", userIdentification='" + userIdentification + '\'' +
+                ", identificationType='" + identificationType + '\'' +
+                ", role='" + role + '\'' +
+                ", entity='" + entity + '\'' +
+                '}';
     }
 }

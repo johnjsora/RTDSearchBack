@@ -184,4 +184,26 @@ public class proposalmoldel {
     public void setLastKeyEvaluated(Map<String, AttributeValue> lastKeyEvaluated) {
         this.lastKeyEvaluated = lastKeyEvaluated;
     }
+
+    @Override
+    public String toString() {
+        return "proposalmoldel{" +
+                "idProp='" + idProp + '\'' +
+                ", dateInserted=" + dateInserted +
+                ", userDocument='" + userDocument + '\'' +
+                ", userDocumentType='" + userDocumentType + '\'' +
+                ", sendBy='" + sendBy + '\'' +
+                ", sendByEmail='" + sendByEmail + '\'' +
+                ", status='" + status + '\'' +
+                ", reference='" + reference + '\'' +
+                ", amount=" + amount +
+                ", typeProposal='" + typeProposal + '\'' +
+                ", keyFile='" + keyFile + '\'' +
+                ", usersCount=" + usersCount +
+                ", haveInexists=" + haveInexists +
+                ", description='" + description + '\'' +
+                ", bank='" + bank + '\'' +
+                ", lastKeyEvaluated=" + lastKeyEvaluated +
+                '}';
+    }
 }
