@@ -48,6 +48,7 @@ public class Launcher implements RequestStreamHandler {
                 case "GET":
                     String dataValueGet = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("email"));
                     String dataValueGetDoc = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("doc"));
+                    String dataValueDocCP = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("doccp"));
 
                     if(dataValueGet != null){
                         ResponseUserModel resp = user.getUsers(dataValueGet);
@@ -56,6 +57,11 @@ public class Launcher implements RequestStreamHandler {
                     }
                     else if(dataValueGetDoc != null){
                         ResponseDocuments respdoc = user.getDocuments(dataValueGetDoc);
+                        replyProxy.put("body",objectMapper.writeValueAsString(respdoc));
+                        replyProxy.put("statusCode", respdoc.getOperationCode());
+                    }
+                    else if(dataValueDocCP != null){
+                        ResponseDocuments respdoc = user.getAuthorityLetter(dataValueDocCP);
                         replyProxy.put("body",objectMapper.writeValueAsString(respdoc));
                         replyProxy.put("statusCode", respdoc.getOperationCode());
                     }

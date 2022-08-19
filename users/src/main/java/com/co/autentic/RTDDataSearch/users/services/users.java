@@ -83,6 +83,20 @@ public class users {
 
     }
 
+    public ResponseDocuments getAuthorityLetter(String documentId){
+        ResponseDocuments data = new ResponseDocuments();
+        try{
+
+            return data;
+        }
+        catch (Exception ex){
+            data.setOperationCode(500);
+            data.setOperationMessage(ex.getMessage());
+            return data;
+        }
+
+    }
+
     public UserExistsResponse verifyByCC(UserExistsRequestModel request){
         UserExistsResponse resp = new UserExistsResponse();
         try{
