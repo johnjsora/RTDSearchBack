@@ -12,14 +12,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.co.autentic.RTDDataSearch.common.utils.GenUtils;
 import com.co.autentic.RTDDataSearch.users.aws.AWSS3Connection;
 import com.co.autentic.RTDDataSearch.users.aws.DynamoClient;
-import com.co.autentic.RTDDataSearch.users.aws.models.TransactionItem;
-import com.co.autentic.RTDDataSearch.users.aws.models.proposalmoldel;
-import com.co.autentic.RTDDataSearch.users.aws.models.usermodel;
+import com.co.autentic.RTDDataSearch.users.aws.models.*;
 import com.co.autentic.RTDDataSearch.users.models.*;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,6 +85,62 @@ public class users {
     public ResponseDocuments getAuthorityLetter(String documentId){
         ResponseDocuments data = new ResponseDocuments();
         try{
+            //find process ids
+            DynamoClient<TransactionItem> db = new DynamoClient<>("urlAccess99", TransactionItem.class);
+            List<urlAccessmodel> resplistIds = db.getURLAccessIndex(documentId);
+            List<presignermodel> names = new ArrayList<>();
+            if(resplistIds.size() > 0){
+                for (urlAccessmodel resplistId : resplistIds) {
+                    //find presigner
+                    db = new DynamoClient<>("preSigner99", TransactionItem.class);
+                    presignermodel pre = db.getDocumentsNames(resplistId.getCaseNumber());
+                    if (pre.getDocumentName() != null) {
+                        names.add(pre);
+                    }
+                }
+                if (names.size()>0){
+                    //find signeddocs
+                    signeddocsmodel signedFinal = null;
+                    for(presignermodel pre:names){
+                        db = new DynamoClient<>("signedDocs98", TransactionItem.class);
+                        signeddocsmodel tempSigned = db.getDocumentsSigneds(pre.getProccessId(),pre.getDocumentId());
+                        if(tempSigned != null){
+                            if(signedFinal == null){
+                                signedFinal = tempSigned;
+                            }
+                            else{
+                                Date date1=new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(signedFinal.getDateSigned());
+                                Date date2=new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(tempSigned.getDateSigned());
+                                if(date2.compareTo(date1) < 0){
+                                    signedFinal = tempSigned;
+                                }
+                            }
+                        }
+
+                    }
+                    if(signedFinal.getUrl() != null){
+                        data.setOperationCode(200);
+                        data.setOperationMessage("Find URL");
+                        data.setDocumentBase(signedFinal.getUrl());
+                        data.setDocumentExtention("URL");
+                        data.setDocumentName("Carta Poder");
+                        return data;
+                    }
+                    else{
+                        data.setOperationCode(400);
+                        data.setOperationMessage("No se encuentran Procesos");
+                    }
+
+                }
+                else{
+                    data.setOperationCode(400);
+                    data.setOperationMessage("No se encuentran Procesos");
+                }
+            }
+            else{
+                data.setOperationCode(400);
+                data.setOperationMessage("No se encuentran Procesos");
+            }
 
             return data;
         }

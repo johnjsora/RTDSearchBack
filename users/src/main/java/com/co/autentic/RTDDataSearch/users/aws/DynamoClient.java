@@ -15,9 +15,7 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Index;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.co.autentic.RTDDataSearch.users.aws.models.TransactionItem;
-import com.co.autentic.RTDDataSearch.users.aws.models.proposalmoldel;
-import com.co.autentic.RTDDataSearch.users.aws.models.urlAccessmodel;
+import com.co.autentic.RTDDataSearch.users.aws.models.*;
 import com.co.autentic.RTDDataSearch.users.models.ResponseListClient;
 import com.co.autentic.RTDDataSearch.users.models.ResponseListProposal;
 
@@ -85,7 +83,6 @@ public class DynamoClient<T> {
                     urlAccessmodel tempAcces = new urlAccessmodel();
                     tempAcces.setCaseNumber(result.getItems().get(y).get("caseNumber").getS());
                     tempAcces.setUserDoc(result.getItems().get(y).get("userDoc").getS());
-                    tempAcces.setGsi_userDoc(result.getItems().get(y).get("gsi_userDoc").getS());
                     itemsListURLAccess.add(tempAcces);
                 }
 
@@ -101,6 +98,92 @@ public class DynamoClient<T> {
 
         }
     }
+
+    public  presignermodel getDocumentsNames(String keyValue) {
+
+        try {
+
+            QueryRequest request = new QueryRequest();
+            request.setTableName(tableName);
+            //request.setIndexName("preSigner99");
+            request.setKeyConditionExpression("caseNumber = :v_caseNumber");
+
+
+            Map<String, AttributeValue> queryConditions = new HashMap<>();
+            queryConditions.put(":v_caseNumber", new AttributeValue().withS(keyValue));
+
+
+            request.setExpressionAttributeValues(queryConditions);
+
+            Map<String, AttributeValue> lastEvaluatedKey = null;
+            do {
+                request.setExclusiveStartKey(lastEvaluatedKey);
+                QueryResult result = this.dynamoClient.query(request);
+                lastEvaluatedKey = result.getLastEvaluatedKey();
+                for(int y=0; y<result.getItems().size();y++){
+                    presignermodel tempAcces = new presignermodel();
+                    for(int i=0; i< result.getItems().get(y).get("documents").getL().size();i++){
+                        if(result.getItems().get(y).get("documents").getL().get(i).getM().get("doc_name").getS().toLowerCase().equals("carta poder")){
+                            tempAcces.setDocumentName(result.getItems().get(y).get("documents").getL().get(i).getM().get("doc_name").getS());
+                            tempAcces.setDocumentId(result.getItems().get(y).get("documents").getL().get(i).getM().get("id").getS());
+                            tempAcces.setProccessId(keyValue);
+                            return tempAcces;
+                        }
+                    }
+
+                }
+            } while (lastEvaluatedKey != null && lastEvaluatedKey.size() != 0);
+            return new presignermodel();
+
+        } catch (AmazonServiceException e) {
+
+            System.err.println(e.getErrorMessage());
+            System.exit(1);
+            return new presignermodel();
+
+        }
+    }
+    public signeddocsmodel getDocumentsSigneds(String keyValue, String idDoc) {
+
+        try {
+
+            QueryRequest request = new QueryRequest();
+            request.setTableName(tableName);
+            //request.setIndexName("preSigner99");
+            request.setKeyConditionExpression("caseNumber = :v_caseNumber");
+
+
+            Map<String, AttributeValue> queryConditions = new HashMap<>();
+            queryConditions.put(":v_caseNumber", new AttributeValue().withS(keyValue));
+
+
+            request.setExpressionAttributeValues(queryConditions);
+
+            Map<String, AttributeValue> lastEvaluatedKey = null;
+            do {
+                request.setExclusiveStartKey(lastEvaluatedKey);
+                QueryResult result = this.dynamoClient.query(request);
+                lastEvaluatedKey = result.getLastEvaluatedKey();
+                for(int y=0; y<result.getItems().size();y++){
+                    signeddocsmodel tempAcces = new signeddocsmodel();
+                    if(result.getItems().get(y).get("state").getS().toLowerCase().equals("firmado")){
+                        tempAcces.setDateSigned(result.getItems().get(y).get("changeStateDate").getS());
+                        tempAcces.setUrl(result.getItems().get(y).get("mapDocDig_signed").getM().get(idDoc).getM().get("URLDocumentoFirmadoAmazon__c").getS());
+                        return tempAcces;
+                    }
+                }
+            } while (lastEvaluatedKey != null && lastEvaluatedKey.size() != 0);
+            return new signeddocsmodel();
+
+        } catch (AmazonServiceException e) {
+
+            System.err.println(e.getErrorMessage());
+            System.exit(1);
+            return new signeddocsmodel();
+
+        }
+    }
+
 
     public T getItemRange(String keyValue, String rangeKey) {
 
