@@ -15,6 +15,7 @@ import com.co.autentic.RTDDataSearch.users.aws.DynamoClient;
 import com.co.autentic.RTDDataSearch.users.aws.models.*;
 import com.co.autentic.RTDDataSearch.users.models.*;
 
+
 import java.io.*;
 import java.nio.file.Files;
 import java.text.ParseException;
@@ -104,16 +105,30 @@ public class users {
                     for(presignermodel pre:names){
                         db = new DynamoClient<>("signedDocs98", TransactionItem.class);
                         signeddocsmodel tempSigned = db.getDocumentsSigneds(pre.getProccessId(),pre.getDocumentId());
-                        if(tempSigned != null){
+                        if(tempSigned.getDateSigned() != null && tempSigned.getUrl() != null){
                             if(signedFinal == null){
                                 signedFinal = tempSigned;
                             }
                             else{
-                                Date date1=new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(signedFinal.getDateSigned());
-                                Date date2=new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(tempSigned.getDateSigned());
-                                if(date2.compareTo(date1) < 0){
-                                    signedFinal = tempSigned;
+                                try{
+                                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssssss");
+                                    Date date= df.parse(signedFinal.getDateSigned()
+                                            .replace("T"," ")
+                                            .replace("-05:00",""));
+                                    long epoch1 = date.getTime();
+                                    date = df.parse(tempSigned.getDateSigned()
+                                            .replace("T"," ")
+                                            .replace("-05:00",""));
+
+                                    long epoch2 = date.getTime();
+                                    if(epoch1 < epoch2){
+                                        signedFinal = tempSigned;
+                                    }
                                 }
+                                catch(Exception ex){
+                                    ex.printStackTrace();
+                                }
+
                             }
                         }
 
