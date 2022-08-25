@@ -2,6 +2,7 @@ package com.co.autentic.RTDDataSearch.users;
 
 import com.co.autentic.RTDDataSearch.users.aws.DynamoClient;
 import com.co.autentic.RTDDataSearch.users.aws.models.TransactionItem;
+import com.co.autentic.RTDDataSearch.users.aws.models.proposalmoldel;
 import com.co.autentic.RTDDataSearch.users.aws.models.usermodel;
 import com.co.autentic.RTDDataSearch.users.models.*;
 import com.co.autentic.RTDDataSearch.users.services.users;
@@ -29,10 +30,11 @@ public class Test {
         //System.out.println(userExistsResponse);
 
         //System.out.println(userExistsResponse.getOperationCode());
-        //TransactionItem newTI = new TransactionItem("CC1018510708", "Bancolombia", "");
+        //TransactionItem newTI = new TransactionItem("CC0000000000", "RTD", "");
+        //newTI.setEmailSended("andres.giraldo@resuelvetudeuda.co");
         //boolean exis = db.addRow(newTI);
-        //TransactionItem search = db.getItem("CC123456789");
-        //System.out.println(exis);
+        //TransactionItem search = db.getItemRange("CC0000000000", "RTD");
+        //System.out.println(search);
 
         //String key = "Files/john.sora@autentic.com.co/b9a02d30/Prueba.csv";
         //ResponseDocuments respdoc = user.getDocuments(key);
@@ -53,20 +55,37 @@ public class Test {
         //UserExistsResponse resp = user.verifyByCC(request);
         //System.out.println(resp);
 
-        //UserExistsRequestModel request = new UserExistsRequestModel();
+        UserExistsRequestModel request = new UserExistsRequestModel();
         //request.setProposal(false);
 
-        //request.setSendBy("John Sora");
-        //request.setSendByEmail("john.sora@autentic.com.co");
-        //request.setReference("Prueba");
-        //request.setTypeProposal("Multiple");
+        //request.setSendBy("Andres Giraldo");
+        //request.setSendByEmail("andres.giraldo@resuelvetudeuda.co");
+        //request.setReference("1");
+        //request.setTypeProposal("Individual");
+        //request.setAmount(2000);
+        //request.setEntity("Bancolombia");
+        //request.setUserId("CC1018510706");
+        //request.setBank("Bancolombia");
+        //request.setDescription("Negociacion");
 
-        //request.setFileBase64("ZG9jdW1lbnQsdHlwZWRvY3VtZW50LGFtb3VudCxkZXNjcmlwdGlvbixyZWZlcmVuY2UsYmFuaw0KMTAxNTQwMzA1NCxDQywyNDAwMDAwLjQzLExhIGRldWRhIHNlIGxsZXZhIGEgY2FibyBlbiAuLi4uLFBhZ29zLEJhbmNvbG9tYmlhDQo3MjEzNjA2OSxDQywyNTAwMDAwLExhIGRldWRhIHNlIGxsZXZhIGEgY2FibyBlbiAuLi4uLFBhZ29zLEJhbmNvbG9tYmlhDQozMzQ4MDI0OSxDQywyMTAwMDAwLExhIGRldWRhIHNlIGxsZXZhIGEgY2FibyBlbiAuLi4uLFBhZ29zLEJhbmNvbG9tYmlhDQoxMTEzNTIyODEyLENDLDkwMDAwMCxMYSBkZXVkYSBzZSBsbGV2YSBhIGNhYm8gZW4gLi4uLixQYWdvcyxCYW5jb2xvbWJpYQ==");
+        //ResponseProposal response = user.setProposal(request);
+        //System.out.println(response.getOperationCode()+"---"+response.getOperationMessage());
+        //request.setFileBase64("ZG9jdW1lbnRvLGVudGlkYWQsbW9udG8sZGVzY3JpcGNpb24scmVmZXJlbmNpYSBkZSBkZXVkYQpDQzEwMTg1MTA3MDYsQmFuY29sb21iaWEsMjUwMDAwMCxMYSBkZXVkYSBzZSBsbGV2YSBhIGNhYm8gZW4gLi4uLiwyCg==");
         //request.setFileName("Prueba");
         //request.setFileExtention("csv");
 
-        //ResponseListProposal resp = user.getAllProposal(request);
-        //System.out.println(resp.getProposals());
+        //ResponseProposal response = user.setProposalMulti(request);
+        //System.out.println(response.getOperationCode()+"----"+response.getOperationMessage());
+        /*ResponseListProposal resp = user.getAllProposal(request);
+        System.out.println(resp.getProposals());
+
+        DynamoClient<proposalmoldel> dbProposal = new DynamoClient<>("td-Clients-Proposal", proposalmoldel.class);
+        for(proposalmoldel proposal: resp.getProposals()){
+            if(proposal.getSendByEmail().equals("andres.giraldo@resuelvetudeuda.co")) {
+                boolean wasDelete = dbProposal.deleteRow(proposal);
+                System.out.println("Was delete: " + wasDelete + "--" + proposal);
+            }
+        }*/
 
         //UserExistsRequestModel request = new UserExistsRequestModel();
         //request.setProposal(false);

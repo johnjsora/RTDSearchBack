@@ -187,7 +187,7 @@ public class proposalmoldel {
 
     @Override
     public String toString() {
-        return "proposalmoldel{" +
+        return "\nproposalmoldel{" +
                 "idProp='" + idProp + '\'' +
                 ", dateInserted=" + dateInserted +
                 ", userDocument='" + userDocument + '\'' +

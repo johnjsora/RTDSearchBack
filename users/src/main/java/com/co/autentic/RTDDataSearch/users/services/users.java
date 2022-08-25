@@ -212,7 +212,7 @@ public class users {
             Date currentDate = Calendar.getInstance(TimeZone.getTimeZone("America/Bogota")).getTime();
             long epoch = currentDate.getTime();
 
-            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",request.getReference(),request.getAmount(),request.getTypeProposal(),key,1, false,request.getDescription(), request.getBank(), request.getUserId(), request.getEntity());
+            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",request.getReference(),request.getAmount(),request.getTypeProposal(),key,1, false,request.getDescription(), request.getBank(), request.getUserId(), "CC");
             setDataProposal(proposal);
 
             resp.setOperationCode(200);
@@ -255,7 +255,6 @@ public class users {
                 //Read CVS
                 InputStream is = new ByteArrayInputStream(file);
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
                 String line = null;
                 List<String[]>  newList = new ArrayList<>();
                 double totalAmount = 0;
@@ -287,7 +286,7 @@ public class users {
                         String bank = "";
                         if (responseExists.isExists()) {
                             uuid = UUID.randomUUID().toString().split("-")[0];
-
+                            bank = values[1];
                             switch (values.length){
                                 case 3:
                                     amount = Double.parseDouble(values[2]);
@@ -301,16 +300,10 @@ public class users {
                                     description = values[3];
                                     amount = Double.parseDouble(values[2]);
                                     break;
-                                case 6:
-                                    bank = values[5];
-                                    Reference = values[4];
-                                    description = values[3];
-                                    amount = Double.parseDouble(values[2]);
-                                    break;
                             }
 
-                            newList.add(new String[] {values[0] , values[1] ,Double.toString(amount),description ,Reference ,bank , "Usuario existente"});
-                            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",Reference,amount,request.getTypeProposal(),key, 1,inexists, description ,bank ,values[0] ,values[1] );
+                            newList.add(new String[] {values[0] , values[1] ,Double.toString(amount),description ,Reference , bank, "Usuario existente"});
+                            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",Reference,amount,request.getTypeProposal(),key, 1,inexists, description ,bank ,values[0] ,"CC" );
                             emailProposals.add(proposal);
                             setDataProposal(proposal);
                         } else if (!(responseExists.isExists())) {
@@ -453,7 +446,7 @@ public class users {
     public TransactionItem getconfig() throws ParseException {
         TransactionItem response = new TransactionItem();
         DynamoClient<TransactionItem> db = new DynamoClient<>(TableData, TransactionItem.class);
-        response =db.getItem(docConfig);
+        response =db.getItemRange(docConfig, "RTD");
         return response;
     }
     public ResponseListProposal getAllProposal (UserExistsRequestModel request){

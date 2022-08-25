@@ -258,10 +258,11 @@ public class DynamoClient<T> {
 
                 ScanResult result = this.dynamoClient.scan(scanRequest);
                 for (Map<String, AttributeValue> item : result.getItems()){
-                    ResponseList.add(new proposalmoldel(item.get("idProp").getS(),
+                    ResponseList.add(new proposalmoldel(
+                            item.get("idProp") == null? "N/A":item.get("idProp").getS(),
                             Long.parseLong(item.get("dateInserted").getN()),
-                            item.get("sendBy").getS(),
-                            item.get("sendByEmail").getS(),
+                            item.get("sendBy") == null? "N/A": item.get("sendBy").getS(),
+                            item.get("sendByEmail") == null? "N/A": item.get("sendByEmail").getS(),
                             item.get("status") == null? "N/A": item.get("status").getS(),
                             item.get("reference") == null? "N/A": item.get("reference").getS(),
                             item.get("amount")== null? 0 : Double.parseDouble(item.get("amount").getN()),
@@ -271,8 +272,8 @@ public class DynamoClient<T> {
                             item.get("keyFile")== null? false :item.get("haveInexists").getBOOL(),
                             item.get("description")== null? "N/A":  item.get("description").getS(),
                             item.get("bank")== null? "N/A":  item.get("bank").getS(),
-                            item.get("userDocument").getS(),
-                            item.get("userDocumentType").getS()));
+                            item.get("userDocument") == null? "N/A": item.get("userDocument").getS(),
+                            item.get("userDocumentType") == null? "N/A":item.get("userDocumentType").getS()));
 
                 }
                 lastKeyEvaluated = result.getLastEvaluatedKey();
