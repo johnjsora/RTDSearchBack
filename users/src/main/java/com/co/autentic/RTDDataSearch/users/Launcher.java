@@ -29,108 +29,130 @@ public class Launcher implements RequestStreamHandler {
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream,Context context) throws JsonProcessingException {
 
-        ObjectNode replyProxy = objectMapper.createObjectNode();
-        ObjectNode replyHeaders = objectMapper.createObjectNode();
+            ObjectNode replyProxy = objectMapper.createObjectNode();
+            ObjectNode replyHeaders = objectMapper.createObjectNode();
 
-        JsonNode totalInputData;
-        replyHeaders.put("Access-Control-Allow-Origin", "*");
-        replyHeaders.put("Content-Type", "application/json");
-        replyProxy.put("headers", replyHeaders);
+            JsonNode totalInputData;
+            replyHeaders.put("Access-Control-Allow-Origin", "*");
+            replyHeaders.put("Content-Type", "application/json");
+            replyProxy.put("headers", replyHeaders);
 
-        try{
-            totalInputData = objectMapper.readTree(inputStream);
+            try{
+                totalInputData = objectMapper.readTree(inputStream);
+                //context.getLogger().log("HTTP Method: " + totalInputData.get("httpMethod").asText());
+                if (totalInputData.get("httpMethod").asText() != null) {
+                    context.getLogger().log("Proxy object: " + totalInputData.toString());
+                    context.getLogger().log("Body: " + totalInputData.get("body").asText());
+                    context.getLogger().log("HTTP Method: " + totalInputData.get("httpMethod").asText());
 
-            context.getLogger().log("Proxy object: " + totalInputData.toString());
-            context.getLogger().log("Body: " + totalInputData.get("body").asText());
-            context.getLogger().log("HTTP Method: " + totalInputData.get("httpMethod").asText());
-            users user = new users();
-            switch (totalInputData.get("httpMethod").asText()) {
-                case "GET":
-                    String dataValueGet = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("email"));
-                    String dataValueGetDoc = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("doc"));
-                    String dataValueDocCP = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("doccp"));
+                    users user = new users();
+                    switch (totalInputData.get("httpMethod").asText()) {
+                        case "GET":
+                            String dataValueGet = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("email"));
+                            String dataValueGetDoc = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("doc"));
+                            String dataValueDocCP = GenUtils.GetParamValue(totalInputData.get("queryStringParameters").get("doccp"));
 
-                    if(dataValueGet != null){
-                        ResponseUserModel resp = user.getUsers(dataValueGet);
-                        replyProxy.put("body",objectMapper.writeValueAsString(resp));
-                        replyProxy.put("statusCode", resp.getOperationCode());
+                            if(dataValueGet != null){
+                                ResponseUserModel resp = user.getUsers(dataValueGet);
+                                replyProxy.put("body",objectMapper.writeValueAsString(resp));
+                                replyProxy.put("statusCode", resp.getOperationCode());
+                            }
+                            else if(dataValueGetDoc != null){
+                                ResponseDocuments respdoc = user.getDocuments(dataValueGetDoc);
+                                replyProxy.put("body",objectMapper.writeValueAsString(respdoc));
+                                replyProxy.put("statusCode", respdoc.getOperationCode());
+                            }
+                            else if(dataValueDocCP != null){
+                                ResponseDocuments respdoc = user.getAuthorityLetter(dataValueDocCP);
+                                replyProxy.put("body",objectMapper.writeValueAsString(respdoc));
+                                replyProxy.put("statusCode", respdoc.getOperationCode());
+                            }
+
+                            break;
+                        case "POST":
+                            UserExistsRequestModel body = objectMapper.readValue(totalInputData.get("body").asText(), UserExistsRequestModel.class);
+
+                            if(body.isProposal())
+                            {
+                                ResponseProposal respExists = user.setProposal(body);
+                                replyProxy.put("body",objectMapper.writeValueAsString(respExists));
+                                replyProxy.put("statusCode", respExists.getOperationCode());
+                            }
+                            else{
+                                if(body.isClientQuery()){
+                                    ResponseProposal respExists = user.getClientsByEntityAsCSV(body);
+                                    replyProxy.put("body",objectMapper.writeValueAsString(respExists));
+                                    replyProxy.put("statusCode", respExists.getOperationCode());
+                                }
+                                else{
+                                    UserExistsResponse respExists = user.verifyByCC(body);
+                                    replyProxy.put("body",objectMapper.writeValueAsString(respExists));
+                                    replyProxy.put("statusCode", respExists.getOperationCode());
+                                }
+                            }
+                            break;
+                        case "PUT":
+                            UserExistsRequestModel bodyMulti = objectMapper.readValue(totalInputData.get("body").asText(), UserExistsRequestModel.class);
+                            if(bodyMulti.isProposal())
+                            {
+                                ResponseProposal respExists = user.setProposalMulti(bodyMulti);
+                                replyProxy.put("body",objectMapper.writeValueAsString(respExists));
+                                replyProxy.put("statusCode", respExists.getOperationCode());
+                            }
+                            else{
+                                ResponseListProposal respList = user.getAllProposal(bodyMulti);
+                                replyProxy.put("body",objectMapper.writeValueAsString(respList));
+                                replyProxy.put("statusCode", respList.getOperationCode());
+                            }
+                            break;
+                        default:
+                            Responsemodel resperror = new Responsemodel();
+                            resperror.setOperationCode(405);
+                            resperror.setOperationMessage("Método no válido");
+                            replyProxy.put("statusCode", 405);
+                            replyProxy.put("body",objectMapper.writeValueAsString(resperror));
+                            break;
                     }
-                    else if(dataValueGetDoc != null){
-                        ResponseDocuments respdoc = user.getDocuments(dataValueGetDoc);
-                        replyProxy.put("body",objectMapper.writeValueAsString(respdoc));
-                        replyProxy.put("statusCode", respdoc.getOperationCode());
-                    }
-                    else if(dataValueDocCP != null){
-                        ResponseDocuments respdoc = user.getAuthorityLetter(dataValueDocCP);
-                        replyProxy.put("body",objectMapper.writeValueAsString(respdoc));
-                        replyProxy.put("statusCode", respdoc.getOperationCode());
-                    }
+                }
+                else{
+                    context.getLogger().log("Input Data: " + totalInputData.toString());
+                    replyProxy.put("body",this.DirectLambdaConsumption(totalInputData));
+                    replyProxy.put("statusCode", 200);
 
-                    break;
-                case "POST":
-                    UserExistsRequestModel body = objectMapper.readValue(totalInputData.get("body").asText(), UserExistsRequestModel.class);
+                }
 
-                    if(body.isProposal())
-                    {
-                        ResponseProposal respExists = user.setProposal(body);
-                        replyProxy.put("body",objectMapper.writeValueAsString(respExists));
-                        replyProxy.put("statusCode", respExists.getOperationCode());
-                    }
-                    else{
-                        if(body.isClientQuery()){
-                            ResponseProposal respExists = user.getClientsByEntityAsCSV(body);
-                            replyProxy.put("body",objectMapper.writeValueAsString(respExists));
-                            replyProxy.put("statusCode", respExists.getOperationCode());
-                        }
-                        else{
-                            UserExistsResponse respExists = user.verifyByCC(body);
-                            replyProxy.put("body",objectMapper.writeValueAsString(respExists));
-                            replyProxy.put("statusCode", respExists.getOperationCode());
-                        }
-                    }
-                    break;
-                case "PUT":
-                    UserExistsRequestModel bodyMulti = objectMapper.readValue(totalInputData.get("body").asText(), UserExistsRequestModel.class);
-                        if(bodyMulti.isProposal())
-                        {
-                            ResponseProposal respExists = user.setProposalMulti(bodyMulti);
-                            replyProxy.put("body",objectMapper.writeValueAsString(respExists));
-                            replyProxy.put("statusCode", respExists.getOperationCode());
-                        }
-                        else{
-                            ResponseListProposal respList = user.getAllProposal(bodyMulti);
-                            replyProxy.put("body",objectMapper.writeValueAsString(respList));
-                            replyProxy.put("statusCode", respList.getOperationCode());
-                        }
-                    break;
-                default:
-                    Responsemodel resperror = new Responsemodel();
-                    resperror.setOperationCode(405);
-                    resperror.setOperationMessage("Método no válido");
-                    replyProxy.put("statusCode", 405);
-                    replyProxy.put("body",objectMapper.writeValueAsString(resperror));
-                    break;
             }
-        }
-        catch (Exception ex){
-            Responsemodel resperror = new Responsemodel();
-            resperror.setOperationCode(500);
-            resperror.setOperationMessage(ex.getMessage());
-            context.getLogger().log("ERROR ===> " + ex.getMessage());
-            context.getLogger().log(ex.getMessage());
+            catch (Exception ex){
+                Responsemodel resperror = new Responsemodel();
+                resperror.setOperationCode(500);
+                resperror.setOperationMessage(ex.getMessage());
+                context.getLogger().log("ERROR ===> " + ex.getMessage());
+                context.getLogger().log(ex.getMessage());
 
-            replyProxy.put("statusCode", 500);
-            replyProxy.put("body", objectMapper.writeValueAsString(resperror));
+                replyProxy.put("statusCode", 500);
+                replyProxy.put("body", objectMapper.writeValueAsString(resperror));
 
-        }
-        OutputStreamWriter writer;
-        try {
-            writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-            writer.write(objectMapper.writeValueAsString(replyProxy));
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            }
+            OutputStreamWriter writer;
+            try {
+                writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+                writer.write(objectMapper.writeValueAsString(replyProxy));
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
         }
 
+    }
+    private String DirectLambdaConsumption(JsonNode inputData) throws IOException {
+
+        directAuthorityRequest requestBody = objectMapper.readValue(inputData.toString(), directAuthorityRequest.class);
+        users user = new users();
+        ResponseDocuments respdoc = user.getAuthorityLetter(requestBody.getDoccp());
+
+        if (respdoc != null && !respdoc.getDocumentBase().equals("")) {
+            return objectMapper.writeValueAsString(respdoc);
+        } else {
+            return "";
+        }
     }
 }
