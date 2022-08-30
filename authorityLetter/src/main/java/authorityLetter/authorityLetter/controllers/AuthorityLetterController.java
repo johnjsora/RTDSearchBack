@@ -24,6 +24,7 @@ public class AuthorityLetterController {
     @PostMapping(path = "/",
             consumes = "application/json",
             produces = "application/json")
+    @CrossOrigin(origins = "*")
     public Response massivelyProcess(@RequestBody Request request,  @RequestHeader("x-api-key") String key) {
         Response resp = new Response();
         if(key==null || key.equals("")){
