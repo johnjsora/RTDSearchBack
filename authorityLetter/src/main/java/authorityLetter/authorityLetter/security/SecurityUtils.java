@@ -7,6 +7,9 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -15,6 +18,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.stream.Collectors;
 
 public class SecurityUtils {
     private final String SECRET_KEY = "f1j0GH{8DPRd$yfU";
@@ -74,10 +78,14 @@ public class SecurityUtils {
         try {
             StringBuilder htmlTemplateBuilder = new StringBuilder();
             System.out.println(resource);
-            URL url = SecurityUtils.class.getClassLoader().getResource(resource);
-            System.out.println(url);
-            Files.readAllLines(Paths.get(url.toURI())).forEach(htmlTemplateBuilder::append);
-            return htmlTemplateBuilder.toString();
+            String contents ="";
+            try (InputStream inputStream = SecurityUtils.class.getClassLoader().getResourceAsStream(resource);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                contents = reader.lines()
+                        .collect(Collectors.joining(System.lineSeparator()));
+            }
+            return  contents;
+
         } catch (Exception e) {
             e.printStackTrace();
             return "";
