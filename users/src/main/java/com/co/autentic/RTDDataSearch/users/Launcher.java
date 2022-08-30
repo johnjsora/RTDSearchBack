@@ -40,7 +40,7 @@ public class Launcher implements RequestStreamHandler {
             try{
                 totalInputData = objectMapper.readTree(inputStream);
                 //context.getLogger().log("HTTP Method: " + totalInputData.get("httpMethod").asText());
-                if (totalInputData.get("httpMethod").asText() != null) {
+                if (totalInputData.get("httpMethod") != null) {
                     context.getLogger().log("Proxy object: " + totalInputData.toString());
                     context.getLogger().log("Body: " + totalInputData.get("body").asText());
                     context.getLogger().log("HTTP Method: " + totalInputData.get("httpMethod").asText());
@@ -113,14 +113,24 @@ public class Launcher implements RequestStreamHandler {
                             replyProxy.put("body",objectMapper.writeValueAsString(resperror));
                             break;
                     }
+
+                    OutputStreamWriter writer;
+                    try {
+                        writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+                        writer.write(objectMapper.writeValueAsString(replyProxy));
+                        writer.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
                 else{
                     context.getLogger().log("Input Data: " + totalInputData.toString());
-                    replyProxy.put("body",this.DirectLambdaConsumption(totalInputData));
-                    replyProxy.put("statusCode", 200);
+                    String reply = this.DirectLambdaConsumption(totalInputData);
+                    OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+                    writer.write(reply);
+                    writer.close();
 
                 }
-
             }
             catch (Exception ex){
                 Responsemodel resperror = new Responsemodel();
@@ -133,22 +143,16 @@ public class Launcher implements RequestStreamHandler {
                 replyProxy.put("body", objectMapper.writeValueAsString(resperror));
 
             }
-            OutputStreamWriter writer;
-            try {
-                writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-                writer.write(objectMapper.writeValueAsString(replyProxy));
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-        }
+
 
     }
     private String DirectLambdaConsumption(JsonNode inputData) throws IOException {
 
         directAuthorityRequest requestBody = objectMapper.readValue(inputData.toString(), directAuthorityRequest.class);
+        System.out.println(requestBody.getDoccp());
         users user = new users();
         ResponseDocuments respdoc = user.getAuthorityLetter(requestBody.getDoccp());
-
+        System.out.println(objectMapper.writeValueAsString(respdoc));
         if (respdoc != null && !respdoc.getDocumentBase().equals("")) {
             return objectMapper.writeValueAsString(respdoc);
         } else {

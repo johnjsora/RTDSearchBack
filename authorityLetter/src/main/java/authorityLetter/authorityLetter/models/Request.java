@@ -4,6 +4,7 @@ public class Request {
     private String baseFile;
     private String fileName="N/A";
     private String fileExtention="N/A";
+    private String emailSended;
 
     public String getFileName() {
         return fileName;
@@ -27,5 +28,13 @@ public class Request {
 
     public void setBaseFile(String baseFile) {
         this.baseFile = baseFile;
+    }
+
+    public String getEmailSended() {
+        return emailSended;
+    }
+
+    public void setEmailSended(String emailSended) {
+        this.emailSended = emailSended;
     }
 }

@@ -1,8 +1,8 @@
 package authorityLetter.authorityLetter.models;
 
-public class Response {
+public class SendEmailResponse {
     private int operationCode;
-    private String operationMsg;
+    private String operationMessage;
 
     public int getOperationCode() {
         return operationCode;
@@ -12,13 +12,11 @@ public class Response {
         this.operationCode = operationCode;
     }
 
-    public String getOperationMsg() {
-        return operationMsg;
+    public String getOperationMessage() {
+        return operationMessage;
     }
 
-    public void setOperationMsg(String operationMsg) {
-        this.operationMsg = operationMsg;
+    public void setOperationMessage(String operationMessage) {
+        this.operationMessage = operationMessage;
     }
-
-
 }

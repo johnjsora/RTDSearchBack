@@ -2,11 +2,9 @@ package authorityLetter.authorityLetter.controllers;
 
 import authorityLetter.authorityLetter.models.Request;
 import authorityLetter.authorityLetter.models.Response;
+import authorityLetter.authorityLetter.security.SecurityUtils;
 import authorityLetter.authorityLetter.services.executeprocess_AuthorityLetter;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -26,9 +24,32 @@ public class AuthorityLetterController {
     @PostMapping(path = "/",
             consumes = "application/json",
             produces = "application/json")
-    public Response massivelyProcess(@RequestBody Request request) {
-
+    public Response massivelyProcess(@RequestBody Request request,  @RequestHeader("x-api-key") String key) {
         Response resp = new Response();
+        if(key==null || key.equals("")){
+            resp.setOperationCode(401);
+            resp.setOperationMsg("Not Authorized");
+            return resp;
+        }
+        else{
+            try{
+                SecurityUtils Sec = new SecurityUtils();
+                key = Sec.decrypt(key);
+                if(key != null && !key.equals("nZr4u7x!z%C*F-JaNdRgUkXp2s5v8y/B?D(G+KbPeShVmYq3t6w9z$C&F)H@McQfTjWnZr4u7x!A%D*G-KaNdRgUkXp2s5v8y/B?E(H+MbQeShVmYq3t6w9z$C&F)J@N")){
+                    resp.setOperationCode(401);
+                    resp.setOperationMsg("Not Authorized");
+                    return resp;
+                }
+            }
+            catch (Exception ex){
+                resp.setOperationCode(401);
+                resp.setOperationMsg("Not Authorized");
+                return resp;
+            }
+
+        }
+
+
         try{
             resp.setOperationCode(200);
             byte[] file= null;
@@ -42,7 +63,7 @@ public class AuthorityLetterController {
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
                 //Execute process async
-                this.executeAsyncAuthorityLetter.setProcessAsyncAuthorityLetter(br,FileName);
+                this.executeAsyncAuthorityLetter.setProcessAsyncAuthorityLetter(br,FileName, request.getEmailSended());
                 resp.setOperationMsg("Requerimiento Finalizado");
             }
             else{
@@ -61,6 +82,6 @@ public class AuthorityLetterController {
     }
 
     public boolean validateinfoFile(Request req){
-        return req.getBaseFile() != null && !req.getBaseFile().equals("") && req.getFileName() != null && !req.getFileName().equals("") && req.getFileExtention() != null && !req.getFileExtention().equals("");
+        return req.getBaseFile() != null && !req.getBaseFile().equals("") && req.getFileName() != null && !req.getFileName().equals("") && req.getFileExtention() != null && !req.getFileExtention().equals("") && req.getEmailSended() != null && !req.getEmailSended().equals("");
     }
 }
