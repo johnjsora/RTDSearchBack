@@ -7,7 +7,8 @@ import java.util.Map;
 public class UserExistsRequestModel {
     //User Exist Data
     private String userId="N/A";
-    private String typeDocument="N/A";
+    private String entity="N/A";
+    private boolean clientQuery = false;
 
     //Proposal Data
     private boolean proposal = false;
@@ -34,6 +35,15 @@ public class UserExistsRequestModel {
 
     //Getter and Setter
 
+
+    public boolean isClientQuery() {
+        return clientQuery;
+    }
+
+    public void setClientQuery(boolean clientQuery) {
+        this.clientQuery = clientQuery;
+    }
+
     public boolean isProposal() {
         return proposal;
     }
@@ -50,12 +60,12 @@ public class UserExistsRequestModel {
         this.userId = userId;
     }
 
-    public String getTypeDocument() {
-        return typeDocument;
+    public String getEntity() {
+        return entity;
     }
 
-    public void setTypeDocument(String typeDocument) {
-        this.typeDocument = typeDocument;
+    public void setEntity(String entity) {
+        this.entity = entity;
     }
 
     public String getSendBy() {

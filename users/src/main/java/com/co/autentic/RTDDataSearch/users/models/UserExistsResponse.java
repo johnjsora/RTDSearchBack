@@ -10,4 +10,11 @@ public class UserExistsResponse extends Responsemodel {
     public void setExists(boolean exists) {
         this.exists = exists;
     }
+
+    @Override
+    public String toString() {
+        return "UserExistsResponse{" +
+                "exists=" + exists +
+                '}';
+    }
 }

@@ -2,6 +2,7 @@
 import com.co.autentic.RTDDataSearch.common.utils.GenUtils;
 import com.co.autentic.RTDDataSearch.importData.aws.AWSS3Connection;
 import com.co.autentic.RTDDataSearch.importData.aws.models.AWSConfig;
+import com.co.autentic.RTDDataSearch.importData.aws.models.TransactionItem;
 import com.co.autentic.RTDDataSearch.importData.services.getDataService;
 
 import java.io.IOException;
@@ -15,6 +16,10 @@ public class Test {
 
         getDataService get = new getDataService();
         get.getFileS3();
+        TransactionItem ti = get.getData("CC1018510706", "10");
+        if(ti != null){
+            System.out.println(ti.getEntity());
+        }
     }
 
 }

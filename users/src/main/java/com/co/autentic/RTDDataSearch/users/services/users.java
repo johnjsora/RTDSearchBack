@@ -1,16 +1,25 @@
 package com.co.autentic.RTDDataSearch.users.services;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.BasicSessionCredentials;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.co.autentic.RTDDataSearch.common.utils.GenUtils;
 import com.co.autentic.RTDDataSearch.users.aws.AWSS3Connection;
 import com.co.autentic.RTDDataSearch.users.aws.DynamoClient;
-import com.co.autentic.RTDDataSearch.users.aws.models.TransactionItem;
-import com.co.autentic.RTDDataSearch.users.aws.models.proposalmoldel;
-import com.co.autentic.RTDDataSearch.users.aws.models.usermodel;
+import com.co.autentic.RTDDataSearch.users.aws.models.*;
 import com.co.autentic.RTDDataSearch.users.models.*;
+
 
 import java.io.*;
 import java.nio.file.Files;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -73,18 +82,109 @@ public class users {
         }
 
     }
+
+    public ResponseDocuments getAuthorityLetter(String documentId){
+        ResponseDocuments data = new ResponseDocuments();
+        try{
+            //find process ids
+            DynamoClient<TransactionItem> db = new DynamoClient<>("urlAccess99", TransactionItem.class);
+            List<urlAccessmodel> resplistIds = db.getURLAccessIndex(documentId);
+            List<presignermodel> names = new ArrayList<>();
+            if(resplistIds.size() > 0){
+                for (urlAccessmodel resplistId : resplistIds) {
+                    //find presigner
+                    db = new DynamoClient<>("preSigner99", TransactionItem.class);
+                    presignermodel pre = db.getDocumentsNames(resplistId.getCaseNumber());
+                    if (pre.getDocumentName() != null) {
+                        names.add(pre);
+                    }
+                }
+                if (names.size()>0){
+                    //find signeddocs
+                    signeddocsmodel signedFinal = null;
+                    for(presignermodel pre:names){
+                        db = new DynamoClient<>("signedDocs98", TransactionItem.class);
+                        signeddocsmodel tempSigned = db.getDocumentsSigneds(pre.getProccessId(),pre.getDocumentId());
+                        if(tempSigned.getDateSigned() != null && tempSigned.getUrl() != null){
+                            if(signedFinal == null){
+                                signedFinal = tempSigned;
+                            }
+                            else{
+                                try{
+                                    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssssss");
+                                    Date date= df.parse(signedFinal.getDateSigned()
+                                            .replace("T"," ")
+                                            .replace("-05:00",""));
+                                    long epoch1 = date.getTime();
+                                    date = df.parse(tempSigned.getDateSigned()
+                                            .replace("T"," ")
+                                            .replace("-05:00",""));
+
+                                    long epoch2 = date.getTime();
+                                    if(epoch1 < epoch2){
+                                        signedFinal = tempSigned;
+                                    }
+                                }
+                                catch(Exception ex){
+                                    ex.printStackTrace();
+                                }
+
+                            }
+                        }
+
+                    }
+                    if(signedFinal.getUrl() != null){
+                        data.setOperationCode(200);
+                        data.setOperationMessage("Find URL");
+                        data.setDocumentBase(signedFinal.getUrl());
+                        data.setDocumentExtention("URL");
+                        data.setDocumentName("Carta Poder");
+                        return data;
+                    }
+                    else{
+                        data.setOperationCode(400);
+                        data.setOperationMessage("No se encuentran Procesos");
+                    }
+
+                }
+                else{
+                    data.setOperationCode(400);
+                    data.setOperationMessage("No se encuentran Procesos");
+                }
+            }
+            else{
+                data.setOperationCode(400);
+                data.setOperationMessage("No se encuentran Procesos");
+            }
+
+            return data;
+        }
+        catch (Exception ex){
+            data.setOperationCode(500);
+            data.setOperationMessage(ex.getMessage());
+            return data;
+        }
+
+    }
+
     public UserExistsResponse verifyByCC(UserExistsRequestModel request){
         UserExistsResponse resp = new UserExistsResponse();
         try{
             DynamoClient<TransactionItem> db = new DynamoClient<>(TableDataTransaction, TransactionItem.class);
-            TransactionItem TR = db.getItem(request.getUserId());
-            resp.setOperationCode(200);
-            resp.setOperationMessage("Ok");
+            TransactionItem TR = db.getItemRange(request.getUserId(), request.getEntity());
             if(TR != null){
-                resp.setExists(TR.getDocumentType().equals(request.getTypeDocument()));
+                resp.setOperationCode(200);
+                resp.setOperationMessage("Ok");
+                resp.setExists(TR.getEntity().equals(request.getEntity()));
             }
+            else{
+                resp.setOperationCode(404);
+                resp.setOperationMessage("No existe");
+            }
+
         }
         catch (Exception ex){
+            ex.printStackTrace();
            resp.setOperationCode(500);
            resp.setOperationMessage(ex.getMessage());
         }
@@ -112,7 +212,7 @@ public class users {
             Date currentDate = Calendar.getInstance(TimeZone.getTimeZone("America/Bogota")).getTime();
             long epoch = currentDate.getTime();
 
-            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",request.getReference(),request.getAmount(),request.getTypeProposal(),key,1, false,request.getDescription(), request.getBank(), request.getUserId(), request.getTypeDocument());
+            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",request.getReference(),request.getAmount(),request.getTypeProposal(),key,1, false,request.getDescription(), request.getBank(), request.getUserId(), "CC");
             setDataProposal(proposal);
 
             resp.setOperationCode(200);
@@ -155,7 +255,6 @@ public class users {
                 //Read CVS
                 InputStream is = new ByteArrayInputStream(file);
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
                 String line = null;
                 List<String[]>  newList = new ArrayList<>();
                 double totalAmount = 0;
@@ -171,7 +270,7 @@ public class users {
                         }
                         UserExistsRequestModel userExists = new UserExistsRequestModel();
                         userExists.setUserId(values[0]);
-                        userExists.setTypeDocument(values[1]);
+                        userExists.setEntity(values[1]);
                         UserExistsResponse responseExists = verifyByCC(userExists);
                         try{
                             totalAmount += Double.parseDouble(values[2]);
@@ -187,7 +286,7 @@ public class users {
                         String bank = "";
                         if (responseExists.isExists()) {
                             uuid = UUID.randomUUID().toString().split("-")[0];
-
+                            bank = values[1];
                             switch (values.length){
                                 case 3:
                                     amount = Double.parseDouble(values[2]);
@@ -201,16 +300,10 @@ public class users {
                                     description = values[3];
                                     amount = Double.parseDouble(values[2]);
                                     break;
-                                case 6:
-                                    bank = values[5];
-                                    Reference = values[4];
-                                    description = values[3];
-                                    amount = Double.parseDouble(values[2]);
-                                    break;
                             }
 
-                            newList.add(new String[] {values[0] , values[1] ,Double.toString(amount),description ,Reference ,bank , "Usuario existente"});
-                            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",Reference,amount,request.getTypeProposal(),key, 1,inexists, description ,bank ,values[0] ,values[1] );
+                            newList.add(new String[] {values[0] , values[1] ,Double.toString(amount),description ,Reference , bank, "Usuario existente"});
+                            proposalmoldel proposal = new proposalmoldel(uuid,epoch,request.getSendBy(),request.getSendByEmail(),"Active",Reference,amount,request.getTypeProposal(),key, 1,inexists, description ,bank ,values[0] ,"CC" );
                             emailProposals.add(proposal);
                             setDataProposal(proposal);
                         } else if (!(responseExists.isExists())) {
@@ -221,7 +314,7 @@ public class users {
                     }
                     usercount++;
                 }
-                String tempDir = System.getProperty("java.io.tmpdir");
+                        String tempDir = System.getProperty("java.io.tmpdir");
 
                 File csvOutputFile = new File(tempDir + '/' + request.getFileName() + '.' + request.getFileExtention());
                 try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
@@ -353,7 +446,7 @@ public class users {
     public TransactionItem getconfig() throws ParseException {
         TransactionItem response = new TransactionItem();
         DynamoClient<TransactionItem> db = new DynamoClient<>(TableData, TransactionItem.class);
-        response =db.getItem(docConfig);
+        response =db.getItemRange(docConfig, "RTD");
         return response;
     }
     public ResponseListProposal getAllProposal (UserExistsRequestModel request){
@@ -373,6 +466,66 @@ public class users {
         }
 
         return Resp;
+    }
+
+    public ResponseListClient getAllClient (UserExistsRequestModel request){
+        ResponseListClient Resp = new ResponseListClient();
+        try{
+            DynamoClient<TransactionItem> db = new DynamoClient<>("", TransactionItem.class);
+            Resp = db.getClientsByEntity(request.getEntity());
+            Resp.setOperationCode(200);Resp.setOperationMessage("ok");
+        }
+        catch (Exception ex){
+            Resp.setOperationCode(500);
+            Resp.setOperationMessage(ex.getMessage());
+            System.out.println(ex.toString());
+        }
+
+        return Resp;
+    }
+
+    public ResponseProposal getClientsByEntityAsCSV(UserExistsRequestModel request){
+        ResponseProposal response = new ResponseProposal();
+        try{
+            ResponseListClient clientsByEntity = this.getAllClient(request);
+            List<String[]>  clientList = new ArrayList<>();
+            byte[] bytesFinal = null;
+
+            for(TransactionItem client: clientsByEntity.getClients()){
+                clientList.add(new String[] {client.getDocumentcustomerId(), client.getEntity()});
+            }
+
+            String tempDir = System.getProperty("java.io.tmpdir");
+
+            File csvOutputFile = new File(tempDir + '/' + request.getFileName() + '.' + request.getFileExtention());
+            try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+                clientList.stream()
+                        .map(this::convertToCSV)
+                        .forEach(pw::println);
+            }
+            FileInputStream fis = new FileInputStream(csvOutputFile);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[2048];
+            for (int readNum; (readNum = fis.read(buf)) != -1;) {
+                bos.write(buf, 0, readNum);
+            }
+            bytesFinal = bos.toByteArray();
+            bos.close();
+            fis.close();
+
+            response.setOperationCode(200);
+            response.setOperationMessage("ok");
+            response.setBase64FileCSV(Base64.getEncoder().encodeToString(bytesFinal));
+
+            response.setProposal(null);
+        }
+        catch (Exception ex){
+            response.setOperationCode(500);
+            response.setOperationMessage(ex.getMessage());
+            System.out.println(ex.toString());
+        }
+
+        return response;
     }
 
 }
