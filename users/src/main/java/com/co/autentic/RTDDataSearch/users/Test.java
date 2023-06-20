@@ -6,26 +6,27 @@ import com.co.autentic.RTDDataSearch.users.aws.models.proposalmoldel;
 import com.co.autentic.RTDDataSearch.users.aws.models.usermodel;
 import com.co.autentic.RTDDataSearch.users.models.*;
 import com.co.autentic.RTDDataSearch.users.services.users;
+import com.opencsv.CSVReader;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Properties;
-import java.util.TimeZone;
+import java.util.*;
 
 public class Test {
     private static Properties envConfig;
 
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException, InterruptedException {
         users user = new users();
         DynamoClient<TransactionItem> db = new DynamoClient<>("", TransactionItem.class);
 
         //UserExistsRequestModel requestModel = new UserExistsRequestModel();
         //requestModel.setUserId("CC1018510706");
-        //requestModel.setEntity("Bancolombia");
+        //requestModel.setEntity("BANCOLOMBIA");
+        //TransactionItem userT = db.getItemRange("CC1018510706", "BANCOLOMBIA");
+        //userT.setEntity("BANCOLOMBIA");
+
+        //System.out.println(userT);
         //UserExistsResponse userExistsResponse = user.verifyByCC(requestModel);
         //System.out.println(userExistsResponse);
 
@@ -33,6 +34,48 @@ public class Test {
         //TransactionItem newTI = new TransactionItem("CC0000000000", "RTD", "");
         //newTI.setEmailSended("andres.giraldo@resuelvetudeuda.co");
         //boolean exis = db.addRow(newTI);
+        DynamoClient<usermodel> dbuser = new DynamoClient<>("rtd-Clients-detail", usermodel.class);
+
+        //System.out.println(dbuser.getItem("anyi.valencia@prosperando.co"));
+
+        /*usermodel newUser = new usermodel();
+        newUser.setEmail("analistaportafolios@gconsultorandino.com");
+        newUser.setUserName("Duber Guillermo Tapias Cuta");
+        newUser.setUserIdentification("1116789029");
+        newUser.setIdentificationType("CC");
+        newUser.setRole("User");
+        newUser.setEntity("COLPATRIA,ADAMANTINE SCOTIABANK,CODENSA,SCOTIABANK COLPATRIA,SCOTIABANK CITIBANK,GRUPO CONSULTOR ANDINO COLPATRIA,PERUZZI SKOTIABANK COLPATRIA,SERLEFIN COLPATRIA");
+
+        usermodel newUser = dbuser.getItem("analistaportafolios@gconsultorandino.com");
+        newUser.setEntity("ADAMANTINE SCOTIABANK,CODENSA,SCOTIABANK COLPATRIA,SCOTIABANK CITIBANK,GRUPO CONSULTOR ANDINO COLPATRIA,PERUZZI SKOTIABANK COLPATRIA,SERLEFIN COLPATRIA");
+        boolean save = dbuser.updateRow(newUser);
+        System.out.println("SAVE: "+ save);*/
+
+        CSVReader reader = null;
+
+        try {
+            reader = new CSVReader(new FileReader("C:\\Users\\andre\\Documents\\Codigos\\Resuelve_Tu_Deuda\\Negociacion\\RTDSearchBack\\users\\Base.csv"),';');
+            String[] nextLine=null;
+
+            while ((nextLine = reader.readNext()) != null) {
+                TransactionItem item = new TransactionItem(nextLine[0], nextLine[1], "");
+                boolean created = db.addRow(item);
+                if(!created){
+                    System.out.println("NO CREADO " + nextLine[0] +" "+ nextLine[1]);
+                }
+                else{
+                    System.out.println("CREADO " + nextLine[0] +" "+ nextLine[1]);
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            if (null != reader) {
+                reader.close();
+            }
+        }
+
         //TransactionItem search = db.getItemRange("CC0000000000", "RTD");
         //System.out.println(search);
 
@@ -81,7 +124,7 @@ public class Test {
 
         DynamoClient<proposalmoldel> dbProposal = new DynamoClient<>("td-Clients-Proposal", proposalmoldel.class);
         for(proposalmoldel proposal: resp.getProposals()){
-            if(proposal.getSendByEmail().equals("andres.giraldo@resuelvetudeuda.co")) {
+            if(proposal.getSendByEmail().equals("john.sora@autentic.com.co")) {
                 boolean wasDelete = dbProposal.deleteRow(proposal);
                 System.out.println("Was delete: " + wasDelete + "--" + proposal);
             }
